@@ -38,7 +38,7 @@
             </li>
             <template v-if="isAdmin">
                 <li class="divider"></li>
-                <li><a href="/user/" v-text="i18n('navigator.dropDown.userManagement')"></a></li>
+                <li><router-link to="/user" v-text="i18n('navigator.dropDown.userManagement')"></router-link></li>
                 <li><a href="/agent/" v-text="i18n('navigator.dropDown.agentManagement')"></a></li>
                 <li v-if="!config.clustered">
                     <a href="/operation/log" v-text="i18n('navigator.dropDown.logMonitoring')"></a>

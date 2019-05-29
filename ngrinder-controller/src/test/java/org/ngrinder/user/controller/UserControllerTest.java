@@ -1,4 +1,4 @@
-/* 
+/*
  * Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -9,17 +9,19 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. 
+ * limitations under the License.
  */
 package org.ngrinder.user.controller;
 
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import org.junit.Test;
 import org.ngrinder.AbstractNGrinderTransactionalTest;
 import org.ngrinder.common.controller.BaseController;
 import org.ngrinder.model.Role;
 import org.ngrinder.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,25 +39,22 @@ public class UserControllerTest extends AbstractNGrinderTransactionalTest {
 	@Autowired
 	private UserController userController;
 
+	private Gson gson = new Gson();
 	/**
 	 * Test method for
-	 * {@link org.ngrinder.user.controller.UserController#getAll(org.springframework.ui.ModelMap, org.ngrinder.model.Role,
+	 * {@link org.ngrinder.user.controller.UserController#getAll(org.ngrinder.model.Role,
 	 * org.springframework.data.domain.Pageable, java.lang.String)}
 	 * .
 	 */
 	@Test
 	public void testGetAll() {
-		Pageable page = new PageRequest(1, 10);
+		Pageable page = PageRequest.of(1, 10);
 
-		ModelMap model = new ModelMap();
-		userController.getAll(model, null, page, null);
+		userController.getAll(null, page, null);
 
-		model.clear();
-		userController.getAll(model, Role.ADMIN, page, null);
+		userController.getAll(Role.ADMIN, page, null);
 
-		model.clear();
-		userController.getAll(model, null, page, "user");
-
+		userController.getAll(null, page, "user");
 	}
 
 	/**
@@ -139,40 +138,34 @@ public class UserControllerTest extends AbstractNGrinderTransactionalTest {
 
 	/**
 	 * Test method for
-	 * {@link org.ngrinder.user.controller.UserController#delete(org.springframework.ui.ModelMap, java.lang.String)}
+	 * {@link org.ngrinder.user.controller.UserController#deleteUsers(org.ngrinder.model.User, java.lang.String)}
 	 * .
 	 */
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testDelete() {
-		ModelMap model = new ModelMap();
 		// save new user for test
 		saveTestUser("NewUserId1", "NewUserName1");
 		saveTestUser("NewUserId2", "NewUserName2");
 		saveTestUser("NewUserId3", "NewUserName3");
 
-		Pageable page = new PageRequest(0, 10);
+		Pageable page = PageRequest.of(0, 10);
 
+		Page<User> pagedUsers = null;
 		// search
-		userController.getAll(model, null, page, "NewUserName");
-		PageImpl userList = (PageImpl<User>) model.get("users");
-		assertThat(userList.getContent().size(), is(3));
+		pagedUsers = userController.getAll(null, page, "NewUserName");
+		assertThat(pagedUsers.getContent().size(), is(3));
 
 		// test to delete one
-		model.clear();
-		userController.delete(testUser, "NewUserId1", model);
-		model.clear();
-		userController.getAll(model, Role.USER, page, "NewUserName");
-		userList = (PageImpl<User>) model.get("users");
-		assertThat(userList.getContent().size(), is(2));
+		userController.deleteUsers(testUser, "NewUserId1");
+
+		pagedUsers = userController.getAll(Role.USER, page, "NewUserName");
+		assertThat(pagedUsers.getContent().size(), is(2));
 
 		// test to delete more
-		model.clear();
-		userController.delete(testUser, "NewUserId2,NewUserId3", model);
-		model.clear();
-		userController.getAll(model, Role.USER, page, "NewUserName");
-		userList = (PageImpl<User>) model.get("users");
-		assertThat(userList.getContent().size(), is(0));
+		userController.deleteUsers(testUser, "NewUserId2,NewUserId3");
+		pagedUsers = userController.getAll(Role.USER, page, "NewUserName");
+		assertThat(pagedUsers.getContent().size(), is(0));
 	}
 
 	/**
